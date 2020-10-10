@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Phonebook from './components/Phonebook'
 import PersonForm from './components/PersonForm'
 import Input from './components/Input'
@@ -20,7 +20,6 @@ const App = () => {
         setPeople(response.data)
       })
   }, [])
-
 
 
   const entriesToShow = people.filter(person => person.name.toUpperCase().includes(filterName.toUpperCase()))
