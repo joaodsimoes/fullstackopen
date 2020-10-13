@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import Entry from './components/PhonebookEntry'
 import PersonForm from './components/PersonForm'
+import Notification from './components/Notification'
 import Input from './components/Input'
 import personService from './services/persons'
+
+
+
 
 const App = () => {
 
@@ -10,6 +14,9 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filterName, setFilterName] = useState('')
+  const [errorMessage, setErrorMessage] = useState(null)
+  const [isError, setIsError] = useState(false)
+
 
   useEffect(() => {
     console.log("Requesting persons in phonebook...");
@@ -34,12 +41,22 @@ const App = () => {
       if (result) {
         personService
           .update(user.id, newEntry)
-          .then(responseData => setPeople(people.map(p => p.id !== user.id ? p : responseData)))
+          .then(responseData =>{ 
+          setPeople(people.map(p => p.id !== user.id ? p : responseData))
+          showErrorMessage(`${user.name}'s info was successfully updated.`,false)
+        }).catch((error) =>{
+          setPeople(people.filter((p) => p.id !== user.id))
+          showErrorMessage(`${user.name}'s info has already been deleted from the server.`,true) 
+
+        })
       }
     } else {
       personService
         .create(newEntry)
-        .then(person => setPeople(people.concat(person)))
+        .then(person =>{ 
+        setPeople(people.concat(person))
+        showErrorMessage(`${person.name} was successfully added to the phonebook.`,false)  
+        })
 
     }
     setNewName('')
@@ -54,9 +71,25 @@ const App = () => {
       const id = person.id
       personService
         .deletePerson(id)
-        .then(response => setPeople(people.filter((person) => person.id !== id)))
-        .catch(error => console.log('Error eliminating person'))
+        .then(response =>{ 
+          setPeople(people.filter((p) => p.id !== id))
+          showErrorMessage(`${person.name} was deleted.`,false)
+        })
+        .catch(error =>{
+          setPeople(people.filter((p) => p.id !== id))
+          showErrorMessage(`${person.name} has already been deleted.`,true) 
+        })
     }
+  }
+
+
+  const showErrorMessage = (message,isError) => {
+    setIsError(isError)
+    setErrorMessage(message)
+   
+    setTimeout(() => {
+      setErrorMessage(null)
+    }, 5000)
   }
 
   const handleNameChange = (event) => {
@@ -75,6 +108,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message = {errorMessage} error = {isError}/>
       <PersonForm addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange} />
       <h2>Filter by name</h2>
       <Input description='Filter' value={filterName} onChange={handleFilterNameChange} />
