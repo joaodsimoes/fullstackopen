@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import Phonebook from './components/Phonebook'
+import Entry from './components/PhonebookEntry'
 import PersonForm from './components/PersonForm'
 import Input from './components/Input'
-import axios from 'axios'
+import personService from './services/persons'
 
 const App = () => {
 
@@ -13,11 +13,11 @@ const App = () => {
 
   useEffect(() => {
     console.log("Requesting persons in phonebook...");
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        console.log('Promise fulfilled', response.data)
-        setPeople(response.data)
+    personService
+      .getAll()
+      .then(people => {
+        console.log('Promise fulfilled', people)
+        setPeople(people)
       })
   }, [])
 
@@ -27,13 +27,37 @@ const App = () => {
   const addPerson = (event) => {
     event.preventDefault()
     const newEntry = { name: newName, number: newNumber }
-    if (people.some((e) => e.name === newName))
-      alert(` '${newName}' has already been added to the phonebook.`)
-    else
-      setPeople(people.concat(newEntry))
+    const userExists = people.filter((person) => person.name === newName)
 
+    if (userExists.length > 0) {
+      const person = userExists[0]
+      const result = window.confirm(`${newName} has already been added to the phonebook, replace old number with new one?`)
+      if (result) {
+        personService
+          .update(person.id, newEntry)
+          .then(responseData => setPeople(people.map(p => p.id !== person.id ? p : responseData)))
+      }
+    } else {
+      personService
+        .create(newEntry)
+        .then(person => setPeople(people.concat(person)))
+
+    }
     setNewName('')
     setNewNumber('')
+  }
+
+  const deletePerson = (person) => {
+
+    const message = `Delete ${person.name}?`
+    const result = window.confirm(message);
+    if (result) {
+      const id = person.id
+      personService
+        .deletePerson(id)
+        .then(response => setPeople(people.filter((person) => person.id !== id)))
+        .catch(error => console.log('Error eliminating person'))
+    }
   }
 
   const handleNameChange = (event) => {
@@ -56,7 +80,10 @@ const App = () => {
       <h2>Filter by name</h2>
       <Input description='Filter' value={filterName} onChange={handleFilterNameChange} />
       <h2>Numbers</h2>
-      <Phonebook people={entriesToShow} />
+      <ul>
+        {entriesToShow.map((person) => <Entry key={person.id} entry={person} onClick={() => deletePerson(person)} />)}
+      </ul>
+
     </div>
   )
 }
