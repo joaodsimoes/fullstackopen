@@ -32,8 +32,10 @@ const App = () => {
     noteService
     .update(id, changedNote)
     .then(changedNote => {
+      console.log("entrei no then:",changedNote)
       setNotes(notes.map(note => note.id !== id ? note : changedNote))
     }).catch(error => {
+      console.log("entrei no catch:",error)
       setErrorMessage(
         `Note '${note.content}' was already removed from server`
       )
