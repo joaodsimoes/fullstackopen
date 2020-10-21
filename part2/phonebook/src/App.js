@@ -45,8 +45,12 @@ const App = () => {
           setPeople(people.map(p => p.id !== user.id ? p : responseData))
           showErrorMessage(`${user.name}'s info was successfully updated.`,false)
         }).catch((error) =>{
-          setPeople(people.filter((p) => p.id !== user.id))
-          showErrorMessage(`${user.name}'s info has already been deleted from the server.`,true) 
+          console.log(error.response)
+          console.log(error.response.status);
+          if(error.response.status === 404)
+            setPeople(people.filter((p) => p.id !== user.id))
+
+          showErrorMessage(error.response.data,true) 
 
         })
       }
@@ -56,7 +60,7 @@ const App = () => {
         .then(person =>{ 
         setPeople(people.concat(person))
         showErrorMessage(`${person.name} was successfully added to the phonebook.`,false)  
-        })
+        }).catch(error => showErrorMessage(error.response.data,true)  )
 
     }
     setNewName('')
@@ -77,7 +81,7 @@ const App = () => {
         })
         .catch(error =>{
           setPeople(people.filter((p) => p.id !== id))
-          showErrorMessage(`${person.name} has already been deleted.`,true) 
+          showErrorMessage(error.response.data,true) 
         })
     }
   }
